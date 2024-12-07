@@ -61,35 +61,58 @@ def search_ebay(query):
    # print(links)
     return df
 
-# Example usage
-search_query = "Tatsuro Yamashita Vinyls"
-df = search_ebay(search_query)
-print(df)
-drop_string = 'Shop on eBay'
-df = df[df['Title'] != drop_string]
 
+# # MySQL database connection details
+# host = os.getenv('DB_HOST')
+# port = os.getenv('DB_PORT')
+# dbname = os.getenv('DB_NAME')
+# user = os.getenv('DB_USER')
+# password = os.getenv('DB_PASSWORD')
 
+# # Create a MySQL connection URL using SQLAlchemy
+# connection_url = f'mysql+mysqlconnector://{user}:{password}@{host}:{port}/{dbname}'
 
-# MySQL database connection details
-host = os.getenv('DB_HOST')
-port = os.getenv('DB_PORT')
-dbname = os.getenv('DB_NAME')
-user = os.getenv('DB_USER')
-password = os.getenv('DB_PASSWORD')
+# # Create a SQLAlchemy engine for MySQL
+# engine = create_engine(connection_url,echo=True)
 
-# Create a MySQL connection URL using SQLAlchemy
-connection_url = f'mysql+mysqlconnector://{user}:{password}@{host}:{port}/{dbname}'
+# # Specify the table name where you want to upload the DataFrame
+# table_name = 'guitar_test'
 
-# Create a SQLAlchemy engine for MySQL
-engine = create_engine(connection_url,echo=True)
+# # Upload the DataFrame to MySQL
+# df.to_sql(table_name, engine, if_exists='append', index=False)
 
-# Specify the table name where you want to upload the DataFrame
-table_name = 'guitar_test'
+# print(f"DataFrame has been uploaded to the '{table_name}' table in MySQL.")
 
-# Upload the DataFrame to MySQL
-df.to_sql(table_name, engine, if_exists='append', index=False)
+def upload_dataframe_to_mysql(df, table_name):
+    """
+    Uploads a DataFrame to a MySQL table.
 
-print(f"DataFrame has been uploaded to the '{table_name}' table in MySQL.")
+    Args:
+        df (pd.DataFrame): The DataFrame to upload.
+        table_name (str): The name of the table.
+    """
+    # MySQL database connection details
+    host = os.getenv('DB_HOST')
+    port = os.getenv('DB_PORT')
+    dbname = os.getenv('DB_NAME')
+    user = os.getenv('DB_USER')
+    password = os.getenv('DB_PASSWORD')
+
+    # Create a MySQL connection URL using SQLAlchemy
+    connection_url = f'mysql+mysqlconnector://{user}:{password}@{host}:{port}/{dbname}'
+
+    # Create a SQLAlchemy engine for MySQL
+    engine = create_engine(connection_url, echo=True)
+    Session = sessionmaker(bind=engine)
+
+    # Open a session, upload the DataFrame, and close the session
+    with Session() as session:
+        try:
+            df.to_sql(table_name, con=engine, if_exists='append', index=False)
+            print(f"DataFrame has been uploaded to the '{table_name}' table in MySQL.")
+        except Exception as e:
+            print(f"An error occurred while uploading the DataFrame: {e}")
+            raise
 
 
 def query_data(sql_string):
@@ -117,8 +140,20 @@ select album_name
 ,std(price) sd
 from data 
 group by 1
+limit 10
     """
 #query_data(sql_string)
 
 if __name__ == '__main__':
     Di
+
+
+
+# Example usage
+search_query = "Tatsuro Yamashita Vinyls"
+df = search_ebay(search_query)
+print(df)
+drop_string = 'Shop on eBay'
+df = df[df['Title'] != drop_string]
+table_name = 'guitar_test'
+upload_dataframe_to_mysql(df, table_name)
